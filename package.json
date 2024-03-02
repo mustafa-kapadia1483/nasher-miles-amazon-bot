@@ -22,6 +22,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@tailwindcss/line-clamp": "^0.4.4",
     "electron-updater": "^6.1.7",
+    "exceljs": "^4.4.0",
     "puppeteer": "^22.3.0"
   },
   "devDependencies": {

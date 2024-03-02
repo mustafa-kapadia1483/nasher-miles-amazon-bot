@@ -3,6 +3,8 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
 import scrapeAmazonProductDetails from '../utils/amazon-scraping/scrapeAmazonProductDetails'
+import nasherIcon from '../../resources/nasher-icon.png?asset'
+import exportAmazonProductDetailsToExcel from '../utils/amazon-scraping/exportAmazonProductDetailsToExcel'
 
 function createWindow() {
   // Create the browser window.
@@ -11,7 +13,7 @@ function createWindow() {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    icon: nasherIcon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -51,10 +53,17 @@ app.whenReady().then(() => {
   })
 
   // IPCs
+  /* Calls puppeteer function to scrape data off amazon */
   ipcMain.handle('scrape-amazon-product-details', async (e, configObj) => {
     console.log(configObj)
     const extractedData = await scrapeAmazonProductDetails(configObj)
     return extractedData
+  })
+
+  /* Calls function to create excel from array of data */
+  ipcMain.handle('export-amazon-product-details-to-excel', async (e, productDetailsArray) => {
+    const result = await exportAmazonProductDetailsToExcel(productDetailsArray)
+    return result
   })
 
   createWindow()

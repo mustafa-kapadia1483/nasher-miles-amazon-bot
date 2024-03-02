@@ -62,10 +62,13 @@ async function scrapeAmazonPageData() {
   }
   let fullName = document.querySelector(`[id^=title] h1`).textContent.trim()
 
-  let brandName = ''
+  let brandName = 'NA'
   const brandNameElementOption1 = document.querySelector(`[class*=po-brand]`)
+  const brandNameElementOption2 = document.querySelector(`[class*=brand-snapshot] span`)
   if (brandNameElementOption1) {
-    brandName = brandNameElementOption1.textContent
+    brandName = brandNameElementOption1.innerText
+  } else if (brandNameElementOption2) {
+    brandName = brandNameElementOption2.innerText
   } else {
     brandName = fullName.split(/\s+/)?.[0]
   }
@@ -83,18 +86,27 @@ async function scrapeAmazonPageData() {
     fullName = `${fullName} (${color})`
   }
 
-  const mrp = document
+  /* MRP */
+  let mrp = 'NA'
+  const mrpElement = document
     .querySelector(`[id*="PriceLegalMessage"]`)
-    .parentElement.querySelector(`[class*=price] span`)
-    .textContent.trim()
-    .replaceAll(/[^\d.]/gm, '')
+    ?.parentElement.querySelector(`[class*=price] span`)
 
-  const productSellingPrice = document
-    .querySelector(`.priceblock_vat_inc_price [class*=price] span`)
-    .textContent.trim()
-    .replaceAll(/[^\d.]/gm, '')
+  if (mrpElement) {
+    mrp = mrpElement.textContent.trim().replaceAll(/[^\d.]/gm, '')
+  }
 
-  let modelName = ''
+  /* Selling price */
+  let productSellingPrice = 'NA'
+  let productSellingPriceElement = document.querySelector(
+    `.priceblock_vat_inc_price [class*=price] span`
+  )
+
+  if (productSellingPriceElement) {
+    productSellingPrice = productSellingPriceElement.textContent.trim().replaceAll(/[^\d.]/gm, '')
+  }
+
+  let modelName = 'NA'
   /* Product details */
   for (let li of document.querySelectorAll(
     `[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`
@@ -157,13 +169,19 @@ async function scrapeAmazonPageData() {
     }
   }
 
-  const rating = document.querySelector('#averageCustomerReviews a span').textContent.trim()
+  /* Product rating */
+  let rating = 'NA'
+  const ratingElement = document.querySelector('#averageCustomerReviews a span')
 
-  let stockStatusMessage = ''
+  if (ratingElement) {
+    rating = ratingElement.textContent.trim()
+  }
+
+  let stockStatusMessage = 'NA'
   const stockStatusMessageElement = document.querySelector(`[id="availability"]`)
 
   if (stockStatusMessageElement) {
-    stockStatusMessage = stockStatusMessageElement.textContent.trim()
+    stockStatusMessage = stockStatusMessageElement.innerText.trim()
   }
 
   let gstCreditAvailableStatus = 'TRUE'
@@ -183,13 +201,14 @@ async function scrapeAmazonPageData() {
     modelName,
     bulletPoints,
     imageLinksArray,
+    selectedImageLink: imageLinksArray[0],
     rating,
     stockStatusMessage,
     gstCreditAvailableStatus
   }
 }
 
-export default async function scrapeAmazonProductDetails({ username, password, asin }) {
+export default async function scrapeAmazonProductDetails({ username, password, asinArr }) {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
@@ -222,19 +241,23 @@ export default async function scrapeAmazonProductDetails({ username, password, a
 
   // Loop for scrappping products will be added here:
 
-  const pageUrl = page.url()
-  const newPageUrl = pageUrl.replace(/(?<=\/)([\w]{10})(?=\/)/, asin)
-  console.log(pageUrl, newPageUrl)
-  page.goto(newPageUrl)
+  for (let asin of asinArr) {
+    const pageUrl = page.url()
+    const newPageUrl = pageUrl.replace(/(?<=\/)([\w]{10})(?=\/)/, asin)
+    console.log(pageUrl, newPageUrl)
+    page.goto(newPageUrl)
 
-  /* Check if color present then extract */
-  await page.waitForSelector(`[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`)
-  const productObj = await page.evaluate(scrapeAmazonPageData)
-  productObj['asin'] = asin
+    /* Check if color present then extract */
+    await page.waitForSelector(`[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`)
+    const productObj = await page.evaluate(scrapeAmazonPageData)
+    productObj['asin'] = asin
 
-  productDetailsArray.push(productObj)
+    productDetailsArray.push(productObj)
+  }
 
   console.log(productDetailsArray)
 
-  // await browser.close()
+  await browser.close()
+
+  return productDetailsArray
 }
