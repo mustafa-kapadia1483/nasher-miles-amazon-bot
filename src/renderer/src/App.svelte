@@ -5,7 +5,60 @@
   let asin = 'B0C9HQT7TR'
   let username = ''
   let password = ''
-  let productDetailsArray = []
+  let productDetailsArray = [
+    {
+      brandName: 'Keywest',
+      fullName: "Keywest Women's Vegan Leather Penguin Handbag (Large) (Brown)",
+      mrp: '2899',
+      productSellingPrice: '695.00',
+      modelName: 'ΓÇÄKW-013',
+      bulletPoints:
+        'Material: Our premium handbags for women are made of faux leather. Hand bag for women will make a good pair for both your formal and casual outfits giving you an elite, classy look. Our women bags are long-lasting and durable hence will accompany you for a long period.\n' +
+        'For Everyone: No matter if you are a college student or a working professional, our shoulder bags for women is a perfect fit for everyone. Our stylish yet prime finish will make sure to be your hand bag, ladies bag, high design bag and whatnot. If you are looking for one shop solution then go for this purse for women.\n' +
+        'Spacious and Roomy: Keywest stylish handbags for women looks compact but is roomy. You will have enough space to keep all your essentials. This Faux leather handbag for women contains 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocket that can comfortably hold iPhone, iPad, wallet, cosmetics, umbrella, books, tiffin box, and so on.\n' +
+        'Lightweight: Our branded handbags for women are not only classy but also lightweight. Our ladies bag for women will not be heavy on your shoulder or hand. You can carry them for a long duration without hurting yourself. That being said, they are also strong and can handle the possible amount of weight you put in as a shopping bag.\n' +
+        'Extra Add-ons: Warranty :- 1 Year Warranty On Manufacturing Defects. 100% Quality Assured. Dimensions (In Inches) :- 10" Tall X 12" Wide X 4" Deep Compartments :- 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocketMaterial :-100% PU | Colour :- Brown',
+      imageLinksArray: [
+        'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
+        'https://m.media-amazon.com/images/I/71uQY+PmUnL._SY695_.jpg',
+        'https://m.media-amazon.com/images/I/61+aHhZf1KL._SY695_.jpg',
+        'https://m.media-amazon.com/images/I/716-vh6veCL._SY695_.jpg',
+        'https://m.media-amazon.com/images/I/71I+Tqyub8L._SX695_.jpg',
+        'https://m.media-amazon.com/images/I/711yUpeLkeL._SX695_.jpg'
+      ],
+      selectedImageLink: 'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
+      rating: '3.6',
+      stockStatusMessage: 'In stock',
+      gstCreditAvailableStatus: 'TRUE',
+      asin: 'B0C9HQT7TR'
+    },
+    {
+      brandName: 'Keywest1',
+      fullName: "Keywest Women's Vegan Leather Penguin Handbag (Large) (Brown)",
+      mrp: '2899',
+      productSellingPrice: '695.00',
+      modelName: 'ΓÇÄKW-013',
+      bulletPoints:
+        'Material: Our premium handbags for women are made of faux leather. Hand bag for women will make a good pair for both your formal and casual outfits giving you an elite, classy look. Our women bags are long-lasting and durable hence will accompany you for a long period.\n' +
+        'For Everyone: No matter if you are a college student or a working professional, our shoulder bags for women is a perfect fit for everyone. Our stylish yet prime finish will make sure to be your hand bag, ladies bag, high design bag and whatnot. If you are looking for one shop solution then go for this purse for women.\n' +
+        'Spacious and Roomy: Keywest stylish handbags for women looks compact but is roomy. You will have enough space to keep all your essentials. This Faux leather handbag for women contains 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocket that can comfortably hold iPhone, iPad, wallet, cosmetics, umbrella, books, tiffin box, and so on.\n' +
+        'Lightweight: Our branded handbags for women are not only classy but also lightweight. Our ladies bag for women will not be heavy on your shoulder or hand. You can carry them for a long duration without hurting yourself. That being said, they are also strong and can handle the possible amount of weight you put in as a shopping bag.\n' +
+        'Extra Add-ons: Warranty :- 1 Year Warranty On Manufacturing Defects. 100% Quality Assured. Dimensions (In Inches) :- 10" Tall X 12" Wide X 4" Deep Compartments :- 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocketMaterial :-100% PU | Colour :- Brown',
+      imageLinksArray: [
+        'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
+        'https://m.media-amazon.com/images/I/71uQY+PmUnL._SY695_.jpg',
+        'https://m.media-amazon.com/images/I/61+aHhZf1KL._SY695_.jpg',
+        'https://m.media-amazon.com/images/I/716-vh6veCL._SY695_.jpg',
+        'https://m.media-amazon.com/images/I/71I+Tqyub8L._SX695_.jpg',
+        'https://m.media-amazon.com/images/I/711yUpeLkeL._SX695_.jpg'
+      ],
+      selectedImageLink: 'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
+      rating: '3.6',
+      stockStatusMessage: 'In stock',
+      gstCreditAvailableStatus: 'TRUE',
+      asin: 'B0C9HQT7TR'
+    }
+  ]
   const scrapeAmazonProductDetailsHandler = async (e) => {
     if (asin.length == 0) {
       displayToast('Please enter asins', 'error')
@@ -19,16 +72,12 @@
         .map((asin) => asin.trim())
     }
 
-    e.target.disbaled = true
-
     let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
       'scrape-amazon-product-details',
       { asinArr, username, password }
     )
 
     displayToast(`Product details fetched for ${productDetailsArrayNew.length} asins`, 'success')
-
-    e.target.disbaled = false
 
     productDetailsArray = [...productDetailsArray, ...productDetailsArrayNew]
   }
@@ -66,6 +115,13 @@
   const clearTableHandler = async () => {
     productDetailsArray = []
     displayToast('Product details cleared', 'error')
+  }
+
+  const deleteProductDetailsRowHandler = (e) => {
+    productDetailsArray = productDetailsArray.toSpliced(
+      e.currentTarget.dataset.productDetailsArrayIndex,
+      1
+    )
   }
 </script>
 
@@ -127,6 +183,7 @@
     <table class="table mt-4">
       <thead>
         <tr>
+          <th></th>
           <th>ASIN</th>
           <th>Brand</th>
           <th>Product Name</th>
@@ -143,6 +200,13 @@
       <tbody>
         {#each productDetailsArray as row, productDetailsIndex}
           <tr>
+            <td
+              ><button
+                on:click={deleteProductDetailsRowHandler}
+                data-product-details-array-index={productDetailsIndex}
+                class="btn btn-error">X</button
+              ></td
+            >
             <td>{row.asin}</td>
             <td>{row.brandName}</td>
             <td>
