@@ -6,7 +6,11 @@
   let username = ''
   let password = ''
   let productDetailsArray = []
-  const scrapeAmazonProductDetailsHandler = async () => {
+  const scrapeAmazonProductDetailsHandler = async (e) => {
+    if (asin.length == 0) {
+      displayToast('Please enter asins', 'error')
+      return
+    }
     let asinArr = []
     if (asin.length > 0) {
       asinArr = asin
@@ -15,10 +19,16 @@
         .map((asin) => asin.trim())
     }
 
+    e.target.disbaled = true
+
     let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
       'scrape-amazon-product-details',
       { asinArr, username, password }
     )
+
+    displayToast(`Product details fetched for ${productDetailsArrayNew.length} asins`, 'success')
+
+    e.target.disbaled = false
 
     productDetailsArray = [...productDetailsArray, ...productDetailsArrayNew]
   }
@@ -55,6 +65,7 @@
 
   const clearTableHandler = async () => {
     productDetailsArray = []
+    displayToast('Product details cleared', 'error')
   }
 </script>
 
