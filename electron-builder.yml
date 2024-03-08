@@ -11,6 +11,8 @@ files:
 asarUnpack:
   - resources/**
 win:
+  target: zip
+  asar: false
   executableName: nasher-miles-amazon-bot
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
@@ -39,6 +41,6 @@ appImage:
 npmRebuild: false
 publish:
   provider: generic
-  url: https://example.com/auto-updates
+  url: https://mustafak.dev/auto-updates
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

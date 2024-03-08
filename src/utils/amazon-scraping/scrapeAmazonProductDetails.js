@@ -31,6 +31,12 @@ async function login(page, username, password) {
 
 console.log({ __dirname })
 
+function delay(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time)
+  })
+}
+
 //save cookie function
 async function saveCookie(page, filename) {
   const cookies = await page.cookies()
@@ -53,17 +59,51 @@ async function loadCookie(page, filename) {
 }
 
 /* Scrape data from amazon page */
-async function scrapeAmazonPageData() {
+async function scrapeAmazonPageData(asin) {
   /* delay */
   function delay(time) {
     return new Promise(function (resolve) {
       setTimeout(resolve, time)
     })
   }
+
+  // async function check_any_element_exists_with_retry_custom(
+  //   selectors,
+  //   retries_count = 50,
+  //   sleep_after_each_retry = 500
+  // ) {
+  //   let i = 0
+  //   let flag = true
+  //   while (flag) {
+  //     let elements = selectors.map((selector) => document.querySelector(selector))
+
+  //     if (i < retries_count) {
+  //       if (elements.every((ele) => ele == null)) {
+  //         resp = 'no'
+  //         await delay(sleep_after_each_retry)
+  //       } else {
+  //         flag = false
+  //         resp = 'yes'
+  //       }
+  //     } else {
+  //       flag = false
+  //       resp = 'no'
+  //     }
+  //     i = i + 1
+  //   }
+  //   return resp
+  // }
+
+  // await check_any_element_exists_with_retry_custom(
+  //   [`[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`, `[id*="productDetails"] tr`],
+  //   10,
+  //   1000
+  // )
   let fullName = document.querySelector(`[id^=title] h1`).textContent.trim()
 
   let brandName = 'NA'
-  const brandNameElementOption1 = document.querySelector(`[class*=po-brand]`)
+
+  const brandNameElementOption1 = document.querySelector(`[class*=po-brand] td:nth-child(2)`)
   const brandNameElementOption2 = document.querySelector(`[class*=brand-snapshot] span`)
   if (brandNameElementOption1) {
     brandName = brandNameElementOption1.innerText
@@ -107,24 +147,57 @@ async function scrapeAmazonPageData() {
   }
 
   let modelName = 'NA'
-  /* Product details */
+  let scrapedProductAsin = 'NA'
+
+  /* Product details Option 1*/
   for (let li of document.querySelectorAll(
     `[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`
   )) {
     let [key, value] = li
       .querySelector('span')
-      .textContent.split(':')
+      .innerText.split(':')
       .map((text) => text.trim().replaceAll(/\s\s+/g, ''))
 
     key = key.toLowerCase()
     if (key.includes('model number') || key.includes('part number')) {
       modelName = value
     }
+
+    if (key.includes('asin')) {
+      scrapedProductAsin = value.replace(/[^\w\-.,\s]+/gm, '').trim()
+    }
+  }
+
+  /* Product details Option 2 */
+  for (let tr of document.querySelectorAll(`[id*="productDetails"] tr`)) {
+    let [key, value] = tr.querySelectorAll('*')
+    console.log({ key, value })
+
+    key = key.innerText.toLowerCase()
+    value = value.innerText
+    if (key.includes('model number') || key.includes('part number')) {
+      modelName = value
+    }
+
+    if (key.includes('asin')) {
+      scrapedProductAsin = value.replace(/[^\w\-.,\s]+/gm, '').trim()
+    }
+  }
+  if (modelName !== 'NA') {
+    modelName = modelName.replace(/[^\w\-.,\s]+/gm, '').trim()
+    if (colorElementOption1) {
+      modelName = `${modelName}-${color}`
+    }
   }
 
   let bulletPoints = ''
   for (let bulletPoint of document.querySelectorAll('.product-facts-title ~ ul')) {
-    bulletPoints += `${bulletPoint.textContent.trim()}\n`
+    bulletPoints += `${bulletPoint.innerText.trim()}\n`
+  }
+  if (bulletPoints == '') {
+    for (let bulletPoint of document.querySelectorAll('[id*=featurebullets] ul li')) {
+      bulletPoints += `${bulletPoint.innerText.trim()}\n`
+    }
   }
   bulletPoints = bulletPoints.trim()
 
@@ -142,8 +215,11 @@ async function scrapeAmazonPageData() {
       productDescriptionDiv.querySelector('img')?.remove()
     }
 
-    bulletPoints = productDescriptionDiv.textContent.replace(/\s\s+/g, '').trim()
+    bulletPoints = productDescriptionDiv.innerText.replace(/\s\s+/g, '').trim()
   }
+
+  /* Remove non-ascii values from bullet points */
+  bulletPoints = bulletPoints.replace(/[^\x00-\x7F]+/gm, '')
 
   function dispatchMouseEvents(element) {
     let eventNames = ['mouseeneter', 'mouseover', 'mousemove', 'mouseout', 'mouseleave']
@@ -204,11 +280,18 @@ async function scrapeAmazonPageData() {
     selectedImageLink: imageLinksArray[0],
     rating,
     stockStatusMessage,
-    gstCreditAvailableStatus
+    gstCreditAvailableStatus,
+    asin,
+    'ASIN Mismatch': scrapedProductAsin == asin ? 'FALSE' : `TRUE - ${scrapedProductAsin}`
   }
 }
 
-export default async function scrapeAmazonProductDetails({ username, password, asinArr }) {
+export default async function scrapeAmazonProductDetails({
+  username,
+  password,
+  asinArr,
+  zipcodeArr
+}) {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
@@ -235,22 +318,60 @@ export default async function scrapeAmazonProductDetails({ username, password, a
 
   saveCookie(page, COOKIES_FILE_NAME)
 
-  await page.click(`[id^="B"] .a-link-normal`)
-
   const productDetailsArray = []
 
   // Loop for scrappping products will be added here:
 
   for (let asin of asinArr) {
-    const pageUrl = page.url()
-    const newPageUrl = pageUrl.replace(/(?<=\/)([\w]{10})(?=\/)/, asin)
-    console.log(pageUrl, newPageUrl)
-    page.goto(newPageUrl)
+    // const pageUrl = page.url()
+    // const newPageUrl = pageUrl.replace(/(?<=\/)([\w]{10})(?=\/)/, asin)
+    // console.log(pageUrl, newPageUrl)
+    await page.goto(`https://www.amazon.in/Keywest-Womens-Leather-Penguin-Handbag/dp/${asin}`, {
+      waitUntilL: 'networkidle0'
+    })
 
     /* Check if color present then extract */
-    await page.waitForSelector(`[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`)
-    const productObj = await page.evaluate(scrapeAmazonPageData)
-    productObj['asin'] = asin
+    const productObj = await page.evaluate(scrapeAmazonPageData, asin)
+
+    /* if zipcodes provided check delivery status for each zipcode */
+    if (zipcodeArr) {
+      for (let zipcode of zipcodeArr) {
+        const DELIVERY_BUTTON_SELECTOR = `[id*="DeliveryBlock"] a`
+        await page.waitForSelector(DELIVERY_BUTTON_SELECTOR)
+
+        await page.click(DELIVERY_BUTTON_SELECTOR)
+
+        /* wait for pincode input selector to load */
+        const pincodeInput = await page.waitForSelector(`input[aria-label*="pincode"]`)
+        await delay(1000)
+        await page.keyboard.down('Control')
+        await pincodeInput.press('A')
+        await page.keyboard.up('Control')
+        await pincodeInput.press('Backspace')
+        await pincodeInput.type(zipcode)
+
+        await page.click(`[id*="SpecifyLocation"] [type=submit]`)
+        await delay(1000)
+        await page.waitForResponse(
+          (response) => response.url() === `https://aan.amazon.in/cem` && response.status() === 200
+        )
+        await page.waitForSelector(`[id*=DELIVERY_BLOCK] span`)
+
+        const deliveryStatus = await page.$eval(
+          `[id*=DELIVERY_BLOCK] span`,
+          (deliveryBlockSpan) => {
+            if (deliveryBlockSpan.dataset.csaCDeliveryTime) {
+              return deliveryBlockSpan.dataset.csaCDeliveryTime
+            } else {
+              return deliveryBlockSpan.querySelector('span').innerText
+            }
+          }
+        )
+
+        productObj[zipcode] = deliveryStatus
+        console.log({ zipcode, deliveryStatus })
+      }
+    }
 
     productDetailsArray.push(productObj)
   }

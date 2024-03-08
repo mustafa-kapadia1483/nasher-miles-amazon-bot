@@ -7,3 +7,4 @@ out
 # Generated files
 *cookies.json
 product-details*.xlsx
+.cache

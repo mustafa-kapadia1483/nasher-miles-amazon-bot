@@ -1,6 +1,6 @@
 # nasher-miles-amazon-bot
 
-An Electron application with Svelte
+Amazon bot for Nasher miles GRS
 
 ## Recommended IDE Setup
 
@@ -12,6 +12,7 @@ An Electron application with Svelte
 
 ```bash
 $ npm install
+$ npx puppeteer browsers install chrome
 ```
 
 ### Development
@@ -32,4 +33,3 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
-"# nasher-miles-amazon-bot" 

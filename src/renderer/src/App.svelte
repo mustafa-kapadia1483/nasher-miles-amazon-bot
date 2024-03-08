@@ -3,62 +3,12 @@
   import './app.css'
 
   let asin = 'B0C9HQT7TR'
+  let zipcodes = ''
   let username = ''
   let password = ''
-  let productDetailsArray = [
-    {
-      brandName: 'Keywest',
-      fullName: "Keywest Women's Vegan Leather Penguin Handbag (Large) (Brown)",
-      mrp: '2899',
-      productSellingPrice: '695.00',
-      modelName: 'ΓÇÄKW-013',
-      bulletPoints:
-        'Material: Our premium handbags for women are made of faux leather. Hand bag for women will make a good pair for both your formal and casual outfits giving you an elite, classy look. Our women bags are long-lasting and durable hence will accompany you for a long period.\n' +
-        'For Everyone: No matter if you are a college student or a working professional, our shoulder bags for women is a perfect fit for everyone. Our stylish yet prime finish will make sure to be your hand bag, ladies bag, high design bag and whatnot. If you are looking for one shop solution then go for this purse for women.\n' +
-        'Spacious and Roomy: Keywest stylish handbags for women looks compact but is roomy. You will have enough space to keep all your essentials. This Faux leather handbag for women contains 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocket that can comfortably hold iPhone, iPad, wallet, cosmetics, umbrella, books, tiffin box, and so on.\n' +
-        'Lightweight: Our branded handbags for women are not only classy but also lightweight. Our ladies bag for women will not be heavy on your shoulder or hand. You can carry them for a long duration without hurting yourself. That being said, they are also strong and can handle the possible amount of weight you put in as a shopping bag.\n' +
-        'Extra Add-ons: Warranty :- 1 Year Warranty On Manufacturing Defects. 100% Quality Assured. Dimensions (In Inches) :- 10" Tall X 12" Wide X 4" Deep Compartments :- 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocketMaterial :-100% PU | Colour :- Brown',
-      imageLinksArray: [
-        'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
-        'https://m.media-amazon.com/images/I/71uQY+PmUnL._SY695_.jpg',
-        'https://m.media-amazon.com/images/I/61+aHhZf1KL._SY695_.jpg',
-        'https://m.media-amazon.com/images/I/716-vh6veCL._SY695_.jpg',
-        'https://m.media-amazon.com/images/I/71I+Tqyub8L._SX695_.jpg',
-        'https://m.media-amazon.com/images/I/711yUpeLkeL._SX695_.jpg'
-      ],
-      selectedImageLink: 'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
-      rating: '3.6',
-      stockStatusMessage: 'In stock',
-      gstCreditAvailableStatus: 'TRUE',
-      asin: 'B0C9HQT7TR'
-    },
-    {
-      brandName: 'Keywest1',
-      fullName: "Keywest Women's Vegan Leather Penguin Handbag (Large) (Brown)",
-      mrp: '2899',
-      productSellingPrice: '695.00',
-      modelName: 'ΓÇÄKW-013',
-      bulletPoints:
-        'Material: Our premium handbags for women are made of faux leather. Hand bag for women will make a good pair for both your formal and casual outfits giving you an elite, classy look. Our women bags are long-lasting and durable hence will accompany you for a long period.\n' +
-        'For Everyone: No matter if you are a college student or a working professional, our shoulder bags for women is a perfect fit for everyone. Our stylish yet prime finish will make sure to be your hand bag, ladies bag, high design bag and whatnot. If you are looking for one shop solution then go for this purse for women.\n' +
-        'Spacious and Roomy: Keywest stylish handbags for women looks compact but is roomy. You will have enough space to keep all your essentials. This Faux leather handbag for women contains 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocket that can comfortably hold iPhone, iPad, wallet, cosmetics, umbrella, books, tiffin box, and so on.\n' +
-        'Lightweight: Our branded handbags for women are not only classy but also lightweight. Our ladies bag for women will not be heavy on your shoulder or hand. You can carry them for a long duration without hurting yourself. That being said, they are also strong and can handle the possible amount of weight you put in as a shopping bag.\n' +
-        'Extra Add-ons: Warranty :- 1 Year Warranty On Manufacturing Defects. 100% Quality Assured. Dimensions (In Inches) :- 10" Tall X 12" Wide X 4" Deep Compartments :- 3 main pockets, 1 interior middle zipper pocket and 1 exterior back zipper pocketMaterial :-100% PU | Colour :- Brown',
-      imageLinksArray: [
-        'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
-        'https://m.media-amazon.com/images/I/71uQY+PmUnL._SY695_.jpg',
-        'https://m.media-amazon.com/images/I/61+aHhZf1KL._SY695_.jpg',
-        'https://m.media-amazon.com/images/I/716-vh6veCL._SY695_.jpg',
-        'https://m.media-amazon.com/images/I/71I+Tqyub8L._SX695_.jpg',
-        'https://m.media-amazon.com/images/I/711yUpeLkeL._SX695_.jpg'
-      ],
-      selectedImageLink: 'https://m.media-amazon.com/images/I/71-OIJNcNkL._SY625_.jpg',
-      rating: '3.6',
-      stockStatusMessage: 'In stock',
-      gstCreditAvailableStatus: 'TRUE',
-      asin: 'B0C9HQT7TR'
-    }
-  ]
+
+  let asinEanMappingArray = []
+  let productDetailsArray = []
   const scrapeAmazonProductDetailsHandler = async (e) => {
     if (asin.length == 0) {
       displayToast('Please enter asins', 'error')
@@ -68,13 +18,21 @@
     if (asin.length > 0) {
       asinArr = asin
         .trim()
-        .split(/[,\s+]/)
+        .split(/[,\s+]+/)
         .map((asin) => asin.trim())
     }
 
+    let zipcodeArr = []
+    if (zipcodes.length > 0) {
+      zipcodeArr = zipcodes
+        .trim()
+        .split(/[,\s+]+/)
+        .map((zipcode) => zipcode.trim())
+    }
     let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
       'scrape-amazon-product-details',
-      { asinArr, username, password }
+      /* remove null */
+      { asinArr, zipcodeArr: null, username, password }
     )
 
     displayToast(`Product details fetched for ${productDetailsArrayNew.length} asins`, 'success')
@@ -129,37 +87,55 @@
 <div class="container mx-auto mt-2">
   <div class="card bg-base-100 shadow-xl p-5">
     <p class="mb-3">Enter Amazon Login Credentials:</p>
+    <!-- Login fields -->
+    <div class="flex gap-2 items-center">
+      <label class="input input-bordered flex items-center gap-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="w-4 h-4 opacity-70"
+          ><path
+            d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z"
+          /><path
+            d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z"
+          /></svg
+        >
+        <input bind:value={username} type="text" class="grow" placeholder="Email" />
+      </label>
+
+      <label class="input input-bordered flex items-center gap-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="w-4 h-4 opacity-70"
+          ><path
+            fill-rule="evenodd"
+            d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z"
+            clip-rule="evenodd"
+          /></svg
+        >
+        <input type="password" class="grow" bind:value={password} />
+      </label>
+    </div>
     <div class="flex gap-2 items-end">
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Email:</span>
-        </div>
-        <input
-          bind:value={username}
-          type="text"
-          placeholder="Type here"
-          class="input input-bordered w-full max-w-xs"
-        />
-      </label>
-
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Password:</span>
-        </div>
-        <input
-          bind:value={password}
-          type="password"
-          placeholder="Type here"
-          class="input input-bordered w-full max-w-xs"
-        />
-      </label>
-
       <label class="form-control">
         <div class="label">
           <span class="label-text">Asins to Scrape:</span>
         </div>
         <textarea
           bind:value={asin}
+          placeholder="Asin/s"
+          class="textarea textarea-bordered textarea-xs w-full max-w-xs"
+        />
+      </label>
+      <label class="form-control">
+        <div class="label">
+          <span class="label-text">Zipcodes to check for:</span>
+        </div>
+        <textarea
+          bind:value={zipcodes}
           placeholder="Asin/s"
           class="textarea textarea-bordered textarea-xs w-full max-w-xs"
         />
@@ -177,10 +153,10 @@
   </div>
 </div>
 
-<!-- Scraped Data table -->
+<!-- Scraped Amazon Data table -->
 {#if productDetailsArray.length > 0}
-  <div class="container mx-auto">
-    <table class="table mt-4">
+  <div class="container mx-auto mt-4 overflow-x-auto">
+    <table class="table">
       <thead>
         <tr>
           <th></th>
@@ -195,6 +171,7 @@
           <th>Rating</th>
           <th>Stock Status</th>
           <th>GST Status</th>
+          <th>ASIN Mismatch</th>
         </tr>
       </thead>
       <tbody>
@@ -250,6 +227,7 @@
             <td>{row.rating}</td>
             <td>{row.stockStatusMessage}</td>
             <td>{row.gstCreditAvailableStatus}</td>
+            <td>{row['ASIN Mismatch']}</td>
           </tr>
         {/each}
       </tbody>
