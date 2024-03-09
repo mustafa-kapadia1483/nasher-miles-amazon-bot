@@ -5,6 +5,8 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import scrapeAmazonProductDetails from '../utils/amazon-scraping/scrapeAmazonProductDetails'
 import nasherIcon from '../../resources/nasher-icon.png?asset'
 import exportAmazonProductDetailsToExcel from '../utils/amazon-scraping/exportAmazonProductDetailsToExcel'
+import asinscopeFetch from '../utils/asinscopeFetch'
+import exportAsinEanMapping from '../utils/exportAsinEanMapping'
 
 function createWindow() {
   // Create the browser window.
@@ -63,6 +65,17 @@ app.whenReady().then(() => {
   /* Calls function to create excel from array of data */
   ipcMain.handle('export-amazon-product-details-to-excel', async (e, productDetailsArray) => {
     const result = await exportAmazonProductDetailsToExcel(productDetailsArray)
+    return result
+  })
+
+  ipcMain.handle('asin-ean-mapping', async (e, asin) => {
+    const result = await asinscopeFetch(asin)
+    console.log(result)
+    return result
+  })
+
+  ipcMain.handle('export-asin-ean-mapping', async (e, asinEanMappingArray) => {
+    const result = await exportAsinEanMapping(asinEanMappingArray)
     return result
   })
 

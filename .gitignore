@@ -4,7 +4,9 @@ out
 .DS_Store
 *.log*
 
+.env*
+
 # Generated files
 *cookies.json
-product-details*.xlsx
+*.xlsx
 .cache

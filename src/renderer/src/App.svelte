@@ -1,25 +1,28 @@
 <script>
   import Versions from './components/Versions.svelte'
   import './app.css'
+  import delay from '../../utils/delay'
 
   let asin = 'B0C9HQT7TR'
+  $: asinArr = asin
+    .trim()
+    .split(/[,\s+]+/)
+    .map((asin) => asin.trim())
   let zipcodes = ''
   let username = ''
   let password = ''
 
-  let asinEanMappingArray = []
+  let asinEanMappingArray = [
+    {
+      asin: 'B0C9HQT7TR',
+      ean: 'NA'
+    }
+  ]
   let productDetailsArray = []
   const scrapeAmazonProductDetailsHandler = async (e) => {
-    if (asin.length == 0) {
+    if (asin.trim().length == 0) {
       displayToast('Please enter asins', 'error')
       return
-    }
-    let asinArr = []
-    if (asin.length > 0) {
-      asinArr = asin
-        .trim()
-        .split(/[,\s+]+/)
-        .map((asin) => asin.trim())
     }
 
     let zipcodeArr = []
@@ -29,6 +32,8 @@
         .split(/[,\s+]+/)
         .map((zipcode) => zipcode.trim())
     }
+
+    console.log(asinArr)
     let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
       'scrape-amazon-product-details',
       /* remove null */
@@ -80,6 +85,39 @@
       e.currentTarget.dataset.productDetailsArrayIndex,
       1
     )
+  }
+
+  const getEanHandler = async () => {
+    if (asin.trim().length == 0) {
+      displayToast('Please enter asins', 'error')
+      return
+    }
+
+    for (let asin of asinArr) {
+      const { status, message, ean } = await window.electron.ipcRenderer.invoke(
+        'asin-ean-mapping',
+        asin
+      )
+
+      console.log({ status, message, ean })
+      asinEanMappingArray.push({ asin, ean })
+      asinEanMappingArray = asinEanMappingArray
+
+      displayToast(message, status)
+      await delay(5_000)
+    }
+
+    console.log(asinEanMappingArray)
+  }
+
+  const exportAsinEanMappingHandler = async () => {
+    let { status, message } = await window.electron.ipcRenderer.invoke(
+      'export-asin-ean-mapping',
+      // removing imageLinksArray from export data as only one link needs to be exported
+      asinEanMappingArray
+    )
+
+    displayToast(message, status)
   }
 </script>
 
@@ -148,6 +186,19 @@
           >Export Amazon Product Details to Excel</button
         >
         <button class="btn btn-error" on:click={clearTableHandler}>Clear</button>
+      {/if}
+
+      <button class="btn btn-prmiary" on:click={getEanHandler}>Get EAN</button>
+      {#if asinEanMappingArray.length > 0}
+        <button class="btn btn-success" on:click={exportAsinEanMappingHandler}
+          >Export ASIN /EAN to Excel</button
+        >
+        <button
+          class="btn btn-error"
+          on:click={() => {
+            asinEanMappingArray = []
+          }}>Clear</button
+        >
       {/if}
     </div>
   </div>
@@ -228,6 +279,29 @@
             <td>{row.stockStatusMessage}</td>
             <td>{row.gstCreditAvailableStatus}</td>
             <td>{row['ASIN Mismatch']}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+{/if}
+
+{#if asinEanMappingArray.length > 0}
+  <div class="container mx-auto mt-4 overflow-x-auto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Sr.</th>
+          <th>ASIN</th>
+          <th>EAN</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each asinEanMappingArray as row, index}
+          <tr>
+            <td>{index + 1}</td>
+            <td>{row.asin}</td>
+            <td>{row.ean}</td>
           </tr>
         {/each}
       </tbody>
