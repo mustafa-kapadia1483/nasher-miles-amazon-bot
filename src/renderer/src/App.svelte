@@ -12,18 +12,15 @@
   let username = ''
   let password = ''
 
-  let asinEanMappingArray = [
-    {
-      asin: 'B0C9HQT7TR',
-      ean: 'NA'
-    }
-  ]
+  let asinEanMappingArray = []
   let productDetailsArray = []
   const scrapeAmazonProductDetailsHandler = async (e) => {
     if (asin.trim().length == 0) {
       displayToast('Please enter asins', 'error')
       return
     }
+
+    e.target.disabled = true
 
     let zipcodeArr = []
     if (zipcodes.length > 0) {
@@ -33,16 +30,21 @@
         .map((zipcode) => zipcode.trim())
     }
 
+    await window.electron.ipcRenderer.invoke('open-browser-login', { username, password })
+
     console.log(asinArr)
-    let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
-      'scrape-amazon-product-details',
-      /* remove null */
-      { asinArr, zipcodeArr: null, username, password }
-    )
+    for (let asin of asinArr) {
+      let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
+        'scrape-amazon-product-details',
+        /* remove null */
+        { asinArr: [asin], zipcodeArr: null, username, password }
+      )
 
-    displayToast(`Product details fetched for ${productDetailsArrayNew.length} asins`, 'success')
+      productDetailsArray = [...productDetailsArray, ...productDetailsArrayNew]
+      displayToast(`Product details fetched for ${asin}`, 'success')
+    }
 
-    productDetailsArray = [...productDetailsArray, ...productDetailsArrayNew]
+    e.target.disabled = false
   }
 
   const imageSelectHandler = (e, productDetailsIndex, imageLink) => {
@@ -168,7 +170,8 @@
           class="textarea textarea-bordered textarea-xs w-full max-w-xs"
         />
       </label>
-      <label class="form-control">
+      <!-- TODO: Request extra for zipcode  -->
+      <!-- <label class="form-control">
         <div class="label">
           <span class="label-text">Zipcodes to check for:</span>
         </div>
@@ -177,7 +180,7 @@
           placeholder="Asin/s"
           class="textarea textarea-bordered textarea-xs w-full max-w-xs"
         />
-      </label>
+      </label> -->
       <button class="btn btn-primary" on:click={scrapeAmazonProductDetailsHandler}
         >Scrape Amazon Product Details</button
       >
@@ -211,6 +214,7 @@
       <thead>
         <tr>
           <th></th>
+          <th>Sr.</th>
           <th>ASIN</th>
           <th>Brand</th>
           <th>Product Name</th>
@@ -235,6 +239,7 @@
                 class="btn btn-error">X</button
               ></td
             >
+            <td>{productDetailsIndex + 1}</td>
             <td>{row.asin}</td>
             <td>{row.brandName}</td>
             <td>

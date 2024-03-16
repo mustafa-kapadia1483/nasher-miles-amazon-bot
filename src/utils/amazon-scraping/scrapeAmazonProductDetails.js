@@ -99,7 +99,11 @@ async function scrapeAmazonPageData(asin) {
   //   10,
   //   1000
   // )
-  let fullName = document.querySelector(`[id^=title] h1`).textContent.trim()
+  let fullName = 'NA'
+  let fullNameElement = document.querySelector(`[id^=title] h1`)
+  if (fullNameElement) {
+    fullName = fullNameElement.innerText.trim()
+  }
 
   let brandName = 'NA'
 
@@ -233,8 +237,8 @@ async function scrapeAmazonPageData(asin) {
     })
   }
 
-  imageLinksArray = []
-  imageBlockElement = document.querySelector(`[id="imageBlock"] `)
+  let imageLinksArray = []
+  let imageBlockElement = document.querySelector(`[id="imageBlock"] `)
   if (imageBlockElement) {
     for (let img of imageBlockElement.querySelectorAll(`img`)) {
       dispatchMouseEvents(img)
@@ -263,7 +267,7 @@ async function scrapeAmazonPageData(asin) {
   let gstCreditAvailableStatus = 'TRUE'
   const gstExcludedPriceElement = document.querySelector(`[class*=priceblock_vat_excl]`)
   if (gstExcludedPriceElement) {
-    text = gstExcludedPriceElement.textContent
+    let text = gstExcludedPriceElement.textContent
     if (text.toLowerCase().includes('gst credit not available')) {
       gstCreditAvailableStatus = 'FALSE'
     }
@@ -286,12 +290,7 @@ async function scrapeAmazonPageData(asin) {
   }
 }
 
-export default async function scrapeAmazonProductDetails({
-  username,
-  password,
-  asinArr,
-  zipcodeArr
-}) {
+export async function openBrowserLogin({ username, password }) {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
@@ -318,6 +317,10 @@ export default async function scrapeAmazonProductDetails({
 
   saveCookie(page, COOKIES_FILE_NAME)
 
+  return { browser, page }
+}
+
+export async function scrapeAmazonProductDetails({ browser, page, asinArr, zipcodeArr }) {
   const productDetailsArray = []
 
   // Loop for scrappping products will be added here:
@@ -378,7 +381,7 @@ export default async function scrapeAmazonProductDetails({
 
   console.log(productDetailsArray)
 
-  await browser.close()
+  // await browser.close()
 
   return productDetailsArray
 }

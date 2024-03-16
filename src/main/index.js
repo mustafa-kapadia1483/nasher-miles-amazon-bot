@@ -2,11 +2,14 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
-import scrapeAmazonProductDetails from '../utils/amazon-scraping/scrapeAmazonProductDetails'
 import nasherIcon from '../../resources/nasher-icon.png?asset'
 import exportAmazonProductDetailsToExcel from '../utils/amazon-scraping/exportAmazonProductDetailsToExcel'
 import asinscopeFetch from '../utils/asinscopeFetch'
 import exportAsinEanMapping from '../utils/exportAsinEanMapping'
+import {
+  scrapeAmazonProductDetails,
+  openBrowserLogin
+} from '../utils/amazon-scraping/scrapeAmazonProductDetails'
 
 function createWindow() {
   // Create the browser window.
@@ -43,7 +46,7 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -55,10 +58,22 @@ app.whenReady().then(() => {
   })
 
   // IPCs
+
+  let browser = null,
+    page = null
+
+  ipcMain.handle('open-browser-login', async (e, configObj) => {
+    if (browser == null && page == null) {
+      let result = await openBrowserLogin(configObj)
+      browser = result.browser
+      page = result.page
+    }
+  })
+
   /* Calls puppeteer function to scrape data off amazon */
   ipcMain.handle('scrape-amazon-product-details', async (e, configObj) => {
     console.log(configObj)
-    const extractedData = await scrapeAmazonProductDetails(configObj)
+    const extractedData = await scrapeAmazonProductDetails({ browser, page, ...configObj })
     return extractedData
   })
 

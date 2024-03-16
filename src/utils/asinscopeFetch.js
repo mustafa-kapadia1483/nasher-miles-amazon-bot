@@ -1,10 +1,12 @@
 export default async function asinscopeFetch(asin) {
-  const API_KEY = process.env.MAIN_VITE_ASINSCOPE_API_KEY
+  const API_KEY = import.meta.env.VITE_ASINSCOPE_API_KEY
+  let ean = 'NA'
 
   if (API_KEY == undefined) {
     return {
       status: 'error',
-      message: 'API KEY not found'
+      message: 'API KEY not found',
+      ean
     }
   }
 
@@ -13,7 +15,6 @@ export default async function asinscopeFetch(asin) {
   )
 
   console.log({ apiKey: API_KEY })
-  let ean = ''
   let message = ''
   let status = ''
   try {
@@ -24,7 +25,7 @@ export default async function asinscopeFetch(asin) {
 
     if (ean == 'NA') {
       status = 'error'
-      message = `Could not fetch EAN for ${asin} - ${responseJson['error']}`
+      message = `Could not fetch EAN for ${asin} - ${responseJson['error'] ?? 'EAN not found'}`
     }
 
     console.log(responseJson)
