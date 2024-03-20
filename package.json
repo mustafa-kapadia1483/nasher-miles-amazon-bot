@@ -1,6 +1,6 @@
 {
   "name": "nasher-miles-amazon-bot",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Amazon bot for GRS",
   "main": "./out/main/index.js",
   "author": "Mustafa Kapadia",

@@ -1,7 +1,9 @@
 <script>
   import Versions from './components/Versions.svelte'
+  import AsinEanMappingTable from './components/AsinEanMappingTable.svelte'
   import './app.css'
   import delay from '../../utils/delay'
+  import ProductDetailsTable from './components/asin-details/ProductDetailsTable.svelte'
 
   let asin = 'B0C9HQT7TR'
   $: asinArr = asin
@@ -34,23 +36,21 @@
 
     console.log(asinArr)
     for (let asin of asinArr) {
-      let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
-        'scrape-amazon-product-details',
-        /* remove null */
-        { asinArr: [asin], zipcodeArr: null, username, password }
-      )
+      try {
+        let productDetailsArrayNew = await window.electron.ipcRenderer.invoke(
+          'scrape-amazon-product-details',
+          /* remove null */
+          { asinArr: [asin], zipcodeArr: null, username, password }
+        )
 
-      productDetailsArray = [...productDetailsArray, ...productDetailsArrayNew]
-      displayToast(`Product details fetched for ${asin}`, 'success')
+        productDetailsArray = [...productDetailsArray, ...productDetailsArrayNew]
+        displayToast(`Product details fetched for ${asin}`, 'success')
+      } catch (e) {
+        displayToast(`Error fetching product details for ${asin} - ${e}`, 'error')
+      }
     }
 
     e.target.disabled = false
-  }
-
-  const imageSelectHandler = (e, productDetailsIndex, imageLink) => {
-    console.log(productDetailsIndex, imageLink)
-    productDetailsArray[productDetailsIndex].selectedImageLink = imageLink
-    console.log(productDetailsArray)
   }
 
   let toastQueue = []
@@ -80,13 +80,6 @@
   const clearTableHandler = async () => {
     productDetailsArray = []
     displayToast('Product details cleared', 'error')
-  }
-
-  const deleteProductDetailsRowHandler = (e) => {
-    productDetailsArray = productDetailsArray.toSpliced(
-      e.currentTarget.dataset.productDetailsArrayIndex,
-      1
-    )
   }
 
   const getEanHandler = async () => {
@@ -156,13 +149,14 @@
             clip-rule="evenodd"
           /></svg
         >
-        <input type="password" class="grow" bind:value={password} />
+        <input type="password" placeholder="Password" class="grow" bind:value={password} />
       </label>
     </div>
-    <div class="flex gap-2 items-end">
+    <div class="flex gap-2 items-end mt-2">
       <label class="form-control">
         <div class="label">
           <span class="label-text">Asins to Scrape:</span>
+          <span class="label-text-alt">{asinArr.length}</span>
         </div>
         <textarea
           bind:value={asin}
@@ -209,113 +203,15 @@
 
 <!-- Scraped Amazon Data table -->
 {#if productDetailsArray.length > 0}
-  <div class="container mx-auto mt-4 overflow-x-auto">
-    <table class="table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>Sr.</th>
-          <th>ASIN</th>
-          <th>Brand</th>
-          <th>Product Name</th>
-          <th>Model</th>
-          <th>MRP</th>
-          <th>NLLC</th>
-          <th>Bullet Points</th>
-          <th>Images</th>
-          <th>Rating</th>
-          <th>Stock Status</th>
-          <th>GST Status</th>
-          <th>ASIN Mismatch</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each productDetailsArray as row, productDetailsIndex}
-          <tr>
-            <td
-              ><button
-                on:click={deleteProductDetailsRowHandler}
-                data-product-details-array-index={productDetailsIndex}
-                class="btn btn-error">X</button
-              ></td
-            >
-            <td>{productDetailsIndex + 1}</td>
-            <td>{row.asin}</td>
-            <td>{row.brandName}</td>
-            <td>
-              <p class="max-w-96 line-clamp-3 overflow-y-auto">
-                {row.fullName}
-              </p>
-            </td>
-            <td>{row.modelName}</td>
-            <td>{row.mrp}</td>
-            <td>{row.productSellingPrice}</td>
-            <td>
-              <p class="max-w-96 line-clamp-3 overflow-y-auto">
-                {row.bulletPoints}
-              </p>
-            </td>
-            <td>
-              <div class="flex gap-1">
-                {#each row.imageLinksArray as imageLink, imageLinkIndex}
-                  <button
-                    on:click={(e) => imageSelectHandler(e, productDetailsIndex, imageLink)}
-                    onClick={`modal_${row.asin}_${imageLinkIndex}.showModal()`}
-                    class={imageLink == row.selectedImageLink ? 'border-4 border-green-400' : ''}
-                  >
-                    <div class="avatar">
-                      <div class="w-16 rounded">
-                        <img src={imageLink} alt="product" />
-                      </div>
-                    </div>
-                  </button>
-                  <dialog id={`modal_${row.asin}_${imageLinkIndex}`} class="modal">
-                    <div class="modal-box">
-                      <img src={imageLink} alt="product" />
-                    </div>
-                    <form method="dialog" class="modal-backdrop">
-                      <button>close</button>
-                    </form>
-                  </dialog>
-                {/each}
-              </div>
-            </td>
-            <td>{row.rating}</td>
-            <td>{row.stockStatusMessage}</td>
-            <td>{row.gstCreditAvailableStatus}</td>
-            <td>{row['ASIN Mismatch']}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+  <ProductDetailsTable bind:productDetailsArray />
 {/if}
 
 {#if asinEanMappingArray.length > 0}
-  <div class="container mx-auto mt-4 overflow-x-auto">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Sr.</th>
-          <th>ASIN</th>
-          <th>EAN</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each asinEanMappingArray as row, index}
-          <tr>
-            <td>{index + 1}</td>
-            <td>{row.asin}</td>
-            <td>{row.ean}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+  <AsinEanMappingTable {asinEanMappingArray} />
 {/if}
 
 <!-- Toasts -->
-<div class="toast">
+<div class="toast z-50">
   {#each toastQueue as { message, type }}
     <div
       class="alert"
@@ -330,4 +226,4 @@
   {/each}
 </div>
 
-<!-- <Versions /> -->
+<Versions />

@@ -2,6 +2,8 @@ import puppeteer from 'puppeteer'
 
 import fs from 'fs'
 
+const COOKIES_FILE_NAME = 'amazon-cookies'
+
 async function login(page, username, password) {
   if ((await page.$(`[name="rememberMe"]`)) == null) {
     console.log('Already Logged in')
@@ -28,8 +30,6 @@ async function login(page, username, password) {
     await page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 50_000 })
   }
 }
-
-console.log({ __dirname })
 
 function delay(time) {
   return new Promise(function (resolve) {
@@ -298,8 +298,6 @@ export async function openBrowserLogin({ username, password }) {
   })
   const page = await browser.newPage()
 
-  const COOKIES_FILE_NAME = 'amazon-cookies'
-
   await loadCookie(page, COOKIES_FILE_NAME)
 
   await page.goto('https://business.amazon.in/')
@@ -381,6 +379,7 @@ export async function scrapeAmazonProductDetails({ browser, page, asinArr, zipco
 
   console.log(productDetailsArray)
 
+  saveCookie(page, COOKIES_FILE_NAME)
   // await browser.close()
 
   return productDetailsArray
