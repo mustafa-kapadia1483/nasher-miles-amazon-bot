@@ -67,32 +67,32 @@ async function scrapeAmazonPageData(asin) {
     })
   }
 
-  // async function check_any_element_exists_with_retry_custom(
-  //   selectors,
-  //   retries_count = 50,
-  //   sleep_after_each_retry = 500
-  // ) {
-  //   let i = 0
-  //   let flag = true
-  //   while (flag) {
-  //     let elements = selectors.map((selector) => document.querySelector(selector))
+  async function check_any_element_exists_with_retry_custom(
+    selectors,
+    retries_count = 50,
+    sleep_after_each_retry = 500
+  ) {
+    let i = 0
+    let flag = true
+    while (flag) {
+      let elements = selectors.map((selector) => document.querySelector(selector))
 
-  //     if (i < retries_count) {
-  //       if (elements.every((ele) => ele == null)) {
-  //         resp = 'no'
-  //         await delay(sleep_after_each_retry)
-  //       } else {
-  //         flag = false
-  //         resp = 'yes'
-  //       }
-  //     } else {
-  //       flag = false
-  //       resp = 'no'
-  //     }
-  //     i = i + 1
-  //   }
-  //   return resp
-  // }
+      if (i < retries_count) {
+        if (elements.every((ele) => ele == null)) {
+          resp = 'no'
+          await delay(sleep_after_each_retry)
+        } else {
+          flag = false
+          resp = 'yes'
+        }
+      } else {
+        flag = false
+        resp = 'no'
+      }
+      i = i + 1
+    }
+    return resp
+  }
 
   // await check_any_element_exists_with_retry_custom(
   //   [`[id*=detailBulletsWrapper] [id*="detailBullets"] ul li`, `[id*="productDetails"] tr`],
@@ -147,7 +147,29 @@ async function scrapeAmazonPageData(asin) {
   )
 
   if (productSellingPriceElement) {
-    productSellingPrice = productSellingPriceElement.textContent.trim().replaceAll(/[^\d.]/gm, '')
+    productSellingPrice = productSellingPriceElement.textContent
+  }
+
+  /* In case productSellingPriceElement not present check all buying options */
+  if (!productSellingPriceElement) {
+    /* Click see all buying options */
+    let seeAllBuyingOptionsButtonElement = document.querySelector(
+      `[title="See All Buying Options"]`
+    )
+    if (seeAllBuyingOptionsButtonElement) {
+      seeAllBuyingOptionsButtonElement?.click()
+      const additionalBuyerSellingPriceSelector = `[id="aod-tax-incl-price-1"]`
+      await check_any_element_exists_with_retry_custom([additionalBuyerSellingPriceSelector])
+      if (document.querySelector(additionalBuyerSellingPriceSelector)) {
+        productSellingPrice = document.querySelector(
+          additionalBuyerSellingPriceSelector
+        ).textContent
+      }
+    }
+  }
+
+  if (productSellingPrice !== 'NA') {
+    productSellingPrice = productSellingPrice.trim().replaceAll(/[^\d.]/gm, '')
   }
 
   let modelName = 'NA'
