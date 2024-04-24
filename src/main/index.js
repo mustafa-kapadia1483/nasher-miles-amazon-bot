@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
 import nasherIcon from '../../resources/nasher-icon.png?asset'
 import exportAmazonProductDetailsToExcel from '../utils/amazon-scraping/exportAmazonProductDetailsToExcel'
-import asinscopeFetch from '../utils/asinscopeFetch'
+import { asinscopeFetch, clearCachedStore } from '../utils/asinscopeFetch'
 import exportAsinEanMapping from '../utils/exportAsinEanMapping'
 import {
   scrapeAmazonProductDetails,
@@ -87,6 +87,10 @@ app.whenReady().then(async () => {
     const result = await asinscopeFetch(asin)
     console.log(result)
     return result
+  })
+
+  ipcMain.handle('clear-ean-mapping-store', (e, asin) => {
+    clearCachedStore()
   })
 
   ipcMain.handle('export-asin-ean-mapping', async (e, asinEanMappingArray) => {

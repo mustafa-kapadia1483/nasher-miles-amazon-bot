@@ -1,6 +1,6 @@
 {
   "name": "nasher-miles-amazon-bot",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Amazon bot for GRS",
   "main": "./out/main/index.js",
   "author": "Mustafa Kapadia",
@@ -21,6 +21,7 @@
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
     "@tailwindcss/line-clamp": "^0.4.4",
+    "electron-store": "^8.2.0",
     "electron-updater": "^6.1.7",
     "exceljs": "^4.4.0",
     "puppeteer": "^22.3.0"

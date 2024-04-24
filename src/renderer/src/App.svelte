@@ -2,7 +2,6 @@
   import Versions from './components/Versions.svelte'
   import AsinEanMappingTable from './components/AsinEanMappingTable.svelte'
   import './app.css'
-  import delay from '../../utils/delay'
   import ProductDetailsTable from './components/asin-details/ProductDetailsTable.svelte'
 
   let asin = 'B0C9HQT7TR'
@@ -89,17 +88,20 @@
     }
 
     for (let asin of asinArr) {
+      if (!navigator.onLine) {
+        displayToast('Not connected to internet', 'error')
+        break
+      }
       const { status, message, ean } = await window.electron.ipcRenderer.invoke(
         'asin-ean-mapping',
         asin
       )
 
       console.log({ status, message, ean })
-      asinEanMappingArray.push({ asin, ean })
+      asinEanMappingArray.push({ asin, ean, message })
       asinEanMappingArray = asinEanMappingArray
 
       displayToast(message, status)
-      await delay(5_000)
     }
 
     console.log(asinEanMappingArray)
@@ -108,8 +110,8 @@
   const exportAsinEanMappingHandler = async () => {
     let { status, message } = await window.electron.ipcRenderer.invoke(
       'export-asin-ean-mapping',
-      // removing imageLinksArray from export data as only one link needs to be exported
-      asinEanMappingArray
+      // removing message from ean export data as only one asin & ean needs to be exported
+      asinEanMappingArray.map(({ message, ...others }) => others)
     )
 
     displayToast(message, status)
@@ -193,6 +195,7 @@
         <button
           class="btn btn-error"
           on:click={() => {
+            window.electron.ipcRenderer.invoke('clear-ean-mapping-store')
             asinEanMappingArray = []
           }}>Clear</button
         >

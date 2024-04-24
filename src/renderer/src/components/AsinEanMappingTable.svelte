@@ -9,6 +9,7 @@
         <th>Sr.</th>
         <th>ASIN</th>
         <th>EAN</th>
+        <th>Message</th>
       </tr>
     </thead>
     <tbody>
@@ -17,6 +18,7 @@
           <td>{index + 1}</td>
           <td>{row.asin}</td>
           <td>{row.ean}</td>
+          <td>{row.message}</td>
         </tr>
       {/each}
     </tbody>
