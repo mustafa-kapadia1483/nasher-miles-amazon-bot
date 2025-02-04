@@ -92,13 +92,13 @@
         displayToast('Not connected to internet', 'error')
         break
       }
-      const { status, message, ean } = await window.electron.ipcRenderer.invoke(
+      const { status, message, productData } = await window.electron.ipcRenderer.invoke(
         'asin-ean-mapping',
         asin
       )
 
-      console.log({ status, message, ean })
-      asinEanMappingArray.push({ asin, ean, message })
+      console.log({ status, message, productData })
+      asinEanMappingArray.push({ asin, productData, message })
       asinEanMappingArray = asinEanMappingArray
 
       displayToast(message, status)
@@ -106,24 +106,14 @@
 
     console.log(asinEanMappingArray)
   }
-
-  const exportAsinEanMappingHandler = async () => {
-    let { status, message } = await window.electron.ipcRenderer.invoke(
-      'export-asin-ean-mapping',
-      // removing message from ean export data as only one asin & ean needs to be exported
-      asinEanMappingArray.map(({ message, ...others }) => others)
-    )
-
-    displayToast(message, status)
-  }
 </script>
 
 <!-- Amazon Credentials  -->
 <div class="container mx-auto mt-2">
   <div class="card bg-base-100 shadow-xl p-5">
-    <p class="mb-3">Enter Amazon Login Credentials:</p>
+    <!-- <p class="mb-3">Enter Amazon Login Credentials:</p> -->
     <!-- Login fields -->
-    <div class="flex gap-2 items-center">
+    <!-- <div class="flex gap-2 items-center">
       <label class="input input-bordered flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -153,7 +143,7 @@
         >
         <input type="password" placeholder="Password" class="grow" bind:value={password} />
       </label>
-    </div>
+    </div> -->
     <div class="flex gap-2 items-end mt-2">
       <label class="form-control">
         <div class="label">
@@ -177,9 +167,9 @@
           class="textarea textarea-bordered textarea-xs w-full max-w-xs"
         />
       </label> -->
-      <button class="btn btn-primary" on:click={scrapeAmazonProductDetailsHandler}
+      <!-- <button class="btn btn-primary" on:click={scrapeAmazonProductDetailsHandler}
         >Scrape Amazon Product Details</button
-      >
+      > -->
       {#if productDetailsArray.length > 0}
         <button class="btn btn-success" on:click={exportAmazonProductDetailsToExcel}
           >Export Amazon Product Details to Excel</button
@@ -189,9 +179,6 @@
 
       <button class="btn btn-prmiary" on:click={getEanHandler}>Get EAN</button>
       {#if asinEanMappingArray.length > 0}
-        <button class="btn btn-success" on:click={exportAsinEanMappingHandler}
-          >Export ASIN /EAN to Excel</button
-        >
         <button
           class="btn btn-error"
           on:click={() => {

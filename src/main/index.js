@@ -1,15 +1,20 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import ElectronStore from 'electron-store'
 
+import { hsnDescriptionMapping } from '../constants/hsnDescriptionMapping'
 import nasherIcon from '../../resources/nasher-icon.png?asset'
 import exportAmazonProductDetailsToExcel from '../utils/amazon-scraping/exportAmazonProductDetailsToExcel'
-import { asinscopeFetch, clearCachedStore } from '../utils/asinscopeFetch'
+import { asinscopeFetch } from '../utils/asinscopeFetch'
 import exportAsinEanMapping from '../utils/exportAsinEanMapping'
 import {
   scrapeAmazonProductDetails,
   openBrowserLogin
 } from '../utils/amazon-scraping/scrapeAmazonProductDetails'
+import { getTaxDetails } from '../utils/getTaxDetails'
+
+const productDataStore = new ElectronStore()
 
 function createWindow() {
   // Create the browser window.
@@ -84,13 +89,49 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.handle('asin-ean-mapping', async (e, asin) => {
-    const result = await asinscopeFetch(asin)
-    console.log(result)
-    return result
+    // Check if product data  already exists in cache
+    let productData = productDataStore.get(asin)
+    if (productData) {
+      return {
+        status: 'success',
+        message: 'Fetched from cached productData store',
+        productData: JSON.parse(productData)
+      }
+    }
+
+    const asinscopeFetchResult = await asinscopeFetch(asin)
+    const hsnData = await getTaxDetails(asinscopeFetchResult.productData)
+    console.log(hsnData)
+
+    /**
+     * @type {string} HSN Code
+     */
+    const hsn = hsnData.hsn ?? ''
+    const hsnDescriptionArray = []
+
+    if (hsn.length > 2) {
+      hsnDescriptionArray.push(hsnDescriptionMapping[hsn.substring(0, 2)])
+    }
+
+    if (hsn.length > 4) {
+      hsnDescriptionArray.push(hsnDescriptionMapping[hsn.substring(0, 4)])
+    }
+
+    hsnDescriptionArray.push(hsnDescriptionMapping[hsn] ?? '')
+
+    const hsnDescription = hsnDescriptionArray.join(' ').trim()
+
+    asinscopeFetchResult.productData['hsn'] = hsnData
+    asinscopeFetchResult.productData['hsn']['description'] =
+      hsnDescription.length == 0 ? 'HSN Description not found' : hsnDescription
+
+    productDataStore.set(asin, JSON.stringify(asinscopeFetchResult.productData))
+    console.log(asinscopeFetchResult)
+    return asinscopeFetchResult
   })
 
   ipcMain.handle('clear-ean-mapping-store', (e, asin) => {
-    clearCachedStore()
+    productDataStore.clear()
   })
 
   ipcMain.handle('export-asin-ean-mapping', async (e, asinEanMappingArray) => {

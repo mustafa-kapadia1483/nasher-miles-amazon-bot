@@ -5,7 +5,7 @@ import fs from 'fs'
 const COOKIES_FILE_NAME = 'amazon-cookies'
 
 async function login(page, username, password) {
-  if ((await page.$(`[name="rememberMe"]`)) == null) {
+  if ((await page.$(`input[id*=email]`)) == null) {
     console.log('Already Logged in')
     return
   }
@@ -17,7 +17,7 @@ async function login(page, username, password) {
   await page.keyboard.type(password, { delay: 100 })
 
   /* Click remember me */
-  await page.click(`[name="rememberMe"]`)
+  // await page.click(`[name="rememberMe"]`)
 
   await page.click('#signInSubmit')
 

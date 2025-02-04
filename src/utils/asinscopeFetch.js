@@ -1,54 +1,70 @@
-import ElectronStore from 'electron-store'
 import delay from './delay'
-
-let eanStore = new ElectronStore()
 
 export async function asinscopeFetch(asin) {
   /* Check if ean store already has this data */
-  let cachedEan = eanStore.get(asin)
-  if (cachedEan) {
-    return {
-      status: 'success',
-      message: 'Fetched from cached ean store',
-      ean: cachedEan
-    }
-  }
+  const ASINSCOPE_API_KEY = import.meta.env.VITE_ASINSCOPE_API_KEY
 
-  const API_KEY = import.meta.env.VITE_ASINSCOPE_API_KEY
-  let ean = 'NA'
-
-  if (API_KEY == undefined) {
+  if (ASINSCOPE_API_KEY == undefined) {
     return {
       status: 'error',
       message: 'API KEY not found',
-      ean
+      productData
     }
   }
 
   const requestURL = encodeURI(
-    `https://api.asinscope.com/products/lookup?key=${API_KEY}&asin=${asin}&domain=in`
+    `https://api.asinscope.com/products/lookup?key=${ASINSCOPE_API_KEY}&asin=${asin}&domain=in`
   )
 
   await delay(5_000)
 
-  console.log({ apiKey: API_KEY })
+  console.log({ apiKey: ASINSCOPE_API_KEY })
   let message = ''
   let status = ''
+  let productData = null
   try {
     const response = await fetch(requestURL, { method: 'GET' })
     const responseJson = await response.json()
 
-    ean = responseJson?.items?.[0]?.ean || 'NA'
+    // productData = responseJson?.items?.[0]
 
-    if (ean == 'NA') {
+    // testing remove
+    productData = {
+      asin: 'B01NAL48FU',
+      ean: '5023231006851',
+      upc: '754806251172',
+      mpn: 'DWIN500-5',
+      bsr: 1087,
+      category: 'Sports & Outdoors',
+      brand: 'Winmau',
+      title: 'Winmau Blade 5 Bristle Dartboard',
+      productGroup: 'Sports',
+      lowestNewPrice: 64.99,
+      lowestFormattedPrice: '$64.99',
+      soldByAmazon: false,
+      packageDimensions: {
+        height: 1.77,
+        width: 17.8,
+        length: 17.8,
+        weight: 10.89
+      },
+      upcList: ['754806251172'],
+      eanList: ['5023231006851'],
+      totalNew: 2,
+      smallImage: 'https://images-na.ssl-images-amazon.com/images/I/51ZUUBEJISL.jpg',
+      mediumImage: 'https://images-na.ssl-images-amazon.com/images/I/51ZUUBEJISL.jpg'
+    }
+    // testing remove
+
+    if (productData == null) {
+      productData = {}
       status = 'error'
       message = `Could not fetch EAN for ${asin} - ${responseJson['error'] ?? 'EAN not found'}`
     }
 
-    eanStore.set(asin, ean)
-
     console.log(responseJson)
   } catch (e) {
+    console.error(e)
     message = `EAN fetch API call failed, ${e}`
     status = 'error'
   }
@@ -56,10 +72,6 @@ export async function asinscopeFetch(asin) {
   return {
     status,
     message,
-    ean
+    productData
   }
-}
-
-export function clearCachedStore() {
-  eanStore.clear()
 }
