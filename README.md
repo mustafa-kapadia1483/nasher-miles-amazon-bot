@@ -2,8 +2,12 @@
 
 Amazon bot for Nasher miles GRS
 
-1. Given a list of ASIN(s), scrape product details from amazon business
-2. Given a list of ASIN(s), get corresponding EAN using API from asin scope.
+[deprecated] Given a list of ASIN(s), scrape product details from amazon business
+
+Given a list of ASIN(s):
+
+1. Get corresponding EAN using API from asin scope.
+2. Get corresponding HSN, Tax Rate & HSN Description
 
 ## Recommended IDE Setup
 
