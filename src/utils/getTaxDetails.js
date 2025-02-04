@@ -34,8 +34,8 @@ export async function getTaxDetails(productData) {
   Return: HsnData`
 
   console.log({ prompt })
-  // const result = await model.generateContent(prompt)
+  const result = await model.generateContent(prompt)
 
-  // return JSON.parse(result.response.text())
-  return { hsn: '95069990', taxRate: 18 }
+  return JSON.parse(result.response.text())
+  // test with static output return { hsn: '95069990', taxRate: 18 }
 }

@@ -100,37 +100,48 @@ app.whenReady().then(async () => {
     }
 
     const asinscopeFetchResult = await asinscopeFetch(asin)
-    const hsnData = await getTaxDetails(asinscopeFetchResult.productData)
-    console.log(hsnData)
-
+    console.log('asinscopeFetchResult', asinscopeFetchResult)
     /**
      * @type {string} HSN Code
      */
-    const hsn = hsnData.hsn ?? ''
+    let hsn
+    let taxRate
     const hsnDescriptionArray = []
 
-    if (hsn.length > 2) {
-      hsnDescriptionArray.push(hsnDescriptionMapping[hsn.substring(0, 2)])
+    if (asinscopeFetchResult.status.includes('success')) {
+      const hsnData = await getTaxDetails(asinscopeFetchResult.productData)
+      hsn = hsnData?.hsn
+      taxRate = hsnData?.taxRate
     }
 
-    if (hsn.length > 4) {
-      hsnDescriptionArray.push(hsnDescriptionMapping[hsn.substring(0, 4)])
+    if (hsn) {
+      if (hsn.length > 2) {
+        hsnDescriptionArray.push(hsnDescriptionMapping[hsn.substring(0, 2)])
+      }
+
+      if (hsn.length > 4) {
+        hsnDescriptionArray.push(hsnDescriptionMapping[hsn.substring(0, 4)])
+      }
     }
 
     hsnDescriptionArray.push(hsnDescriptionMapping[hsn] ?? '')
 
     const hsnDescription = hsnDescriptionArray.join(' ').trim()
 
-    asinscopeFetchResult.productData['hsn'] = hsnData
-    asinscopeFetchResult.productData['hsn']['description'] =
-      hsnDescription.length == 0 ? 'HSN Description not found' : hsnDescription
+    asinscopeFetchResult.productData['hsn'] = {
+      hsn,
+      taxRate,
+      description: hsnDescription.length == 0 ? 'HSN Description not found' : hsnDescription
+    }
 
     productDataStore.set(asin, JSON.stringify(asinscopeFetchResult.productData))
+
     console.log(asinscopeFetchResult)
+
     return asinscopeFetchResult
   })
 
-  ipcMain.handle('clear-ean-mapping-store', (e, asin) => {
+  ipcMain.handle('clear-ean-mapping-store', () => {
     productDataStore.clear()
   })
 

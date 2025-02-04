@@ -49,10 +49,10 @@
           <td>{index + 1}</td>
           <td>{row.asin}</td>
           <td>{row.message}</td>
-          <td>{row.productData.ean}</td>
-          <td>{row.productData.hsn.hsn}</td>
-          <td>{row.productData.hsn.taxRate}</td>
-          <td>{row.productData.hsn.description}</td>
+          <td>{row.productData.ean ?? 'NA'}</td>
+          <td>{row.productData.hsn.hsn ?? 'NA'}</td>
+          <td>{row.productData.hsn.taxRate ?? 'NA'}</td>
+          <td>{row.productData.hsn.description ?? 'NA'}</td>
         </tr>
       {/each}
     </tbody>
