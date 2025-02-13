@@ -7,7 +7,7 @@
   let asin = 'B0C9HQT7TR'
   $: asinArr = asin
     .trim()
-    .split(/[,\s+]+/)
+    .split(/[,\n]/)
     .map((asin) => asin.trim())
   let zipcodes = ''
   let username = ''
@@ -27,7 +27,7 @@
     if (zipcodes.length > 0) {
       zipcodeArr = zipcodes
         .trim()
-        .split(/[,\s+]+/)
+        .split(/[,\n]/)
         .map((zipcode) => zipcode.trim())
     }
 

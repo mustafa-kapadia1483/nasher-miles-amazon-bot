@@ -21,12 +21,16 @@ const schema = {
   }
 }
 
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY)
+const model = genAI.getGenerativeModel({
+  model: 'gemini-1.5-flash',
+  generationConfig: schema
+})
+
 export async function getTaxDetails(productData) {
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY)
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
-    generationConfig: schema
-  })
+  if (productData.title == null) {
+    return { hsn: 'HSN Could not be fetched', taxRate: 'NA' }
+  }
 
   const prompt = `HSN code in india for product name: ${productData.title}, brand name: ${productData.brand}, product group: ${productData.productGroup} & category: ${productData.category} using this JSON schema: 
   

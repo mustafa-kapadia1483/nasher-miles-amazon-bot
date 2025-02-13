@@ -16,7 +16,7 @@ export async function asinscopeFetch(asin) {
     `https://api.asinscope.com/products/lookup?key=${ASINSCOPE_API_KEY}&asin=${asin}&domain=in`
   )
 
-  await delay(5_000)
+  // await delay(1_000)
 
   console.log({ apiKey: ASINSCOPE_API_KEY })
   let message = 'EAN Fetched Successfully'

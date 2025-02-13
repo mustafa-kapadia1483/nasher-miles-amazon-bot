@@ -89,6 +89,22 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.handle('asin-ean-mapping', async (e, asin) => {
+    if (!asin.startsWith('B0')) {
+      return {
+        status: 'failed',
+        message: 'EAN Fetch failed, invalid asin format',
+        productData: {
+          asin: asin,
+          ean: null,
+          upc: null,
+          hsn: {
+            hsn: 'NA',
+            taxRate: 'NA',
+            description: 'HSN Description not found'
+          }
+        }
+      }
+    }
     // Check if product data  already exists in cache
     let productData = productDataStore.get(asin)
     if (productData) {
